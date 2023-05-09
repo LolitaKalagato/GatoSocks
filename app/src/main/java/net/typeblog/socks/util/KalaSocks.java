@@ -2,22 +2,22 @@ package net.typeblog.socks.util;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
 import net.typeblog.socks.IVpnService;
+import net.typeblog.socks.SocksVpnService;
 
 
 public class KalaSocks {
 
-    private String ipString;
     private int port = 443;
     private static KalaSocks socks;
     private Profile mProfile;
 
     private IVpnService mBinder;
-    private boolean mRunning = false;
-    private ProfileManager mManager;
+
     private KalaSocks(){
 
     }
@@ -42,19 +42,24 @@ public class KalaSocks {
         return socks;
     }
 
-    public void set(String ipString, int port, Context context){
-        mManager = new ProfileManager(context.getApplicationContext());
+    public void set(String ipString, int port, Context context) throws IllegalArgumentException {
+        ProfileManager mManager = new ProfileManager(context.getApplicationContext());
         mProfile = mManager.getDefault();
-
         if(ipString == null || ipString.isEmpty()){
             throw new IllegalArgumentException("Please send ip-string");
         }
-        this.ipString = ipString;
         if(port != 0) {
             this.port = port;
         }
         mProfile.setServer(ipString);
-        mProfile.setPort(port);
+        mProfile.setPort(this.port);
+        bindService(context);
+    }
+
+    private void bindService(Context context){
+        if(context != null && mBinder == null) {
+            context.bindService(new Intent(context, SocksVpnService.class), mConnection, 0);
+        }
     }
 
 
@@ -71,8 +76,12 @@ public class KalaSocks {
         context.unbindService(mConnection);
     }
 
-   public void startVpn(Context context){
+   public void startVpn(Context context) throws NullPointerException{
+        if(mProfile == null){
+            throw new NullPointerException("Please use set method to initialize the profile");
+        }
        Utility.startVpn(context, mProfile);
+       bindService(context);
    }
 
 
