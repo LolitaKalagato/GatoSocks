@@ -9,6 +9,8 @@ import android.os.IBinder;
 import net.typeblog.socks.IVpnService;
 import net.typeblog.socks.SocksVpnService;
 
+import java.util.ArrayList;
+
 
 public class KalaSocks {
 
@@ -18,6 +20,7 @@ public class KalaSocks {
 
     private IVpnService mBinder;
 
+
     private KalaSocks(){
 
     }
@@ -26,10 +29,12 @@ public class KalaSocks {
         @Override
         public void onServiceConnected(ComponentName p1, IBinder binder) {
             mBinder = IVpnService.Stub.asInterface(binder);
+            ProxyStatus.getInstance().publishState(ProxyState.CONNECTED);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName p1) {
+            ProxyStatus.getInstance().publishState(ProxyState.FAILED);
             mBinder = null;
         }
     };
@@ -45,6 +50,7 @@ public class KalaSocks {
     public void set(String ipString, int port, Context context) throws IllegalArgumentException {
         ProfileManager mManager = new ProfileManager(context.getApplicationContext());
         mProfile = mManager.getDefault();
+
         if(ipString == null || ipString.isEmpty()){
             throw new IllegalArgumentException("Please send ip-string");
         }
@@ -71,6 +77,9 @@ public class KalaSocks {
             mBinder.stop();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        if(ProxyStatus.getInstance() != null) {
+            ProxyStatus.getInstance().publishState(ProxyState.DISCONNECTED);
         }
         mBinder = null;
         context.unbindService(mConnection);

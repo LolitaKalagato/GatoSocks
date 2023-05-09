@@ -3,12 +3,12 @@ package net.typeblog.socks
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import net.typeblog.socks.util.Constants
-import net.typeblog.socks.util.KalaSocks
+import net.typeblog.socks.util.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ProxyStateListener {
     lateinit var kalaSocks : KalaSocks
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
         (findViewById<Button>(R.id.button2)).setOnClickListener {
             kalaSocks.stopVpn(this);
         }
+        ProxyStatus.getInstance().addListener(this);
     }
 
     private fun startVpn() {
@@ -38,5 +39,9 @@ class MainActivity : AppCompatActivity() {
         if (resultCode == RESULT_OK) {
             kalaSocks.startVpn(this);
         }
+    }
+
+    override fun proxyStateChange(proxyState: Int) {
+       Log.e("------", "status$proxyState");
     }
 }
